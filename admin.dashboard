@@ -1,0 +1,455 @@
+<!-- admin.html - Admin Dashboard -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Messages</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #ffffff;
+        }
+
+        .message-card {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .unread {
+            border-left: 4px solid #667eea;
+        }
+
+        .read {
+            border-left: 4px solid #4ade80;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="fixed inset-0 bg-[#0a0a0a] flex items-center justify-center z-50">
+        <div class="bg-[#1a1a1a] p-8 rounded-2xl border border-white/10 w-full max-w-md mx-4">
+            <div class="text-center mb-8">
+                <h1
+                    class="text-3xl font-bold bg-gradient-to-r from-[#667eea] to-[#764ba2] bg-clip-text text-transparent mb-2">
+                    Admin Dashboard
+                </h1>
+                <p class="text-gray-400">Sign in to view messages</p>
+            </div>
+
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Username</label>
+                    <input type="text" id="username" required
+                        class="w-full px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#667eea] transition-colors"
+                        placeholder="admin">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Password</label>
+                    <input type="password" id="password" required
+                        class="w-full px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#667eea] transition-colors"
+                        placeholder="••••••">
+                </div>
+                <button type="submit"
+                    class="w-full py-3 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-lg text-white font-semibold hover:opacity-90 transition-opacity">
+                    Sign In
+                </button>
+            </form>
+            <p id="loginError" class="text-red-500 text-sm text-center mt-4 hidden">Invalid credentials</p>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="hidden">
+        <!-- Header -->
+        <nav class="bg-[#1a1a1a] border-b border-white/10 px-6 py-4">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <h1
+                        class="text-2xl font-bold bg-gradient-to-r from-[#667eea] to-[#764ba2] bg-clip-text text-transparent">
+                        Messages Dashboard
+                    </h1>
+                    <span id="unreadCount"
+                        class="bg-[#667eea] text-white text-xs px-2 py-1 rounded-full hidden">0</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="refreshMessages()" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button onclick="logout()" class="text-gray-400 hover:text-red-400 transition-colors">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="max-w-7xl mx-auto p-6">
+            <!-- Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-[#1a1a1a] p-6 rounded-xl border border-white/10">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-400 text-sm">Total Messages</p>
+                            <p id="totalMessages" class="text-3xl font-bold text-white mt-1">0</p>
+                        </div>
+                        <div
+                            class="w-12 h-12 bg-[#667eea]/20 rounded-lg flex items-center justify-center text-[#667eea]">
+                            <i class="fas fa-envelope text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-[#1a1a1a] p-6 rounded-xl border border-white/10">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-400 text-sm">Unread</p>
+                            <p id="unreadMessages" class="text-3xl font-bold text-[#667eea] mt-1">0</p>
+                        </div>
+                        <div
+                            class="w-12 h-12 bg-[#667eea]/20 rounded-lg flex items-center justify-center text-[#667eea]">
+                            <i class="fas fa-envelope-open text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-[#1a1a1a] p-6 rounded-xl border border-white/10">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-400 text-sm">Today's Messages</p>
+                            <p id="todayMessages" class="text-3xl font-bold text-green-400 mt-1">0</p>
+                        </div>
+                        <div
+                            class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center text-green-400">
+                            <i class="fas fa-calendar-day text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-wrap gap-4 mb-6">
+                <button onclick="markAllRead()"
+                    class="px-4 py-2 bg-[#1a1a1a] border border-white/10 rounded-lg text-sm hover:bg-white/5 transition-colors">
+                    <i class="fas fa-check-double mr-2"></i>Mark all as read
+                </button>
+                <button onclick="exportMessages()"
+                    class="px-4 py-2 bg-[#1a1a1a] border border-white/10 rounded-lg text-sm hover:bg-white/5 transition-colors">
+                    <i class="fas fa-download mr-2"></i>Export CSV
+                </button>
+                <button onclick="clearAllMessages()"
+                    class="px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400 hover:bg-red-500/20 transition-colors">
+                    <i class="fas fa-trash mr-2"></i>Clear All
+                </button>
+                <div class="flex-1"></div>
+                <select id="filterStatus" onchange="renderMessages()"
+                    class="px-4 py-2 bg-[#1a1a1a] border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[#667eea]">
+                    <option value="all">All Messages</option>
+                    <option value="unread">Unread Only</option>
+                    <option value="read">Read Only</option>
+                </select>
+            </div>
+
+            <!-- Messages List -->
+            <div id="messagesList" class="space-y-4">
+                <div class="text-center text-gray-500 py-12">
+                    <i class="fas fa-inbox text-4xl mb-4"></i>
+                    <p>No messages yet</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Detail Modal -->
+    <div id="messageModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
+        <div class="bg-[#1a1a1a] rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                <h3 class="text-xl font-semibold">Message Details</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="modalContent" class="p-6 overflow-y-auto max-h-[60vh]">
+                <!-- Content injected here -->
+            </div>
+            <div class="p-6 border-t border-white/10 flex justify-end gap-3">
+                <button onclick="deleteCurrentMessage()"
+                    class="px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                    Delete
+                </button>
+                <button onclick="replyToMessage()"
+                    class="px-4 py-2 bg-gradient-to-r from-[#667eea] to-[#764ba2] rounded-lg text-white hover:opacity-90 transition-opacity">
+                    <i class="fas fa-reply mr-2"></i>Reply
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple auth (in production, use proper backend auth)
+        const ADMIN_CREDENTIALS = {
+            username: 'admin',
+            password: 'admin123' // Change this in production
+        };
+
+        let currentMessageId = null;
+        let messages = [];
+
+        // Check if already logged in
+        if (localStorage.getItem('adminLoggedIn') === 'true') {
+            showDashboard();
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+                localStorage.setItem('adminLoggedIn', 'true');
+                showDashboard();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        });
+
+        function showDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            loadMessages();
+        }
+
+        function logout() {
+            localStorage.removeItem('adminLoggedIn');
+            location.reload();
+        }
+
+        function loadMessages() {
+            messages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
+            updateStats();
+            renderMessages();
+        }
+
+        function updateStats() {
+            const total = messages.length;
+            const unread = messages.filter(m => !m.read).length;
+            const today = messages.filter(m => {
+                const msgDate = new Date(m.timestamp).toDateString();
+                const todayDate = new Date().toDateString();
+                return msgDate === todayDate;
+            }).length;
+
+            document.getElementById('totalMessages').textContent = total;
+            document.getElementById('unreadMessages').textContent = unread;
+            document.getElementById('todayMessages').textContent = today;
+
+            const unreadBadge = document.getElementById('unreadCount');
+            if (unread > 0) {
+                unreadBadge.textContent = unread;
+                unreadBadge.classList.remove('hidden');
+            } else {
+                unreadBadge.classList.add('hidden');
+            }
+        }
+
+        function renderMessages() {
+            const filter = document.getElementById('filterStatus').value;
+            const container = document.getElementById('messagesList');
+
+            let filteredMessages = messages;
+            if (filter === 'unread') filteredMessages = messages.filter(m => !m.read);
+            if (filter === 'read') filteredMessages = messages.filter(m => m.read);
+
+            // Sort by date, newest first
+            filteredMessages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            if (filteredMessages.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-500 py-12">
+                        <i class="fas fa-inbox text-4xl mb-4"></i>
+                        <p>${filter === 'all' ? 'No messages yet' : 'No ' + filter + ' messages'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredMessages.map(msg => `
+                <div class="message-card bg-[#1a1a1a] rounded-xl border border-white/10 p-6 cursor-pointer hover:bg-white/5 transition-colors ${msg.read ? 'read' : 'unread'}"
+                     onclick="openMessage('${msg.id}')">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-[#667eea] to-[#764ba2] rounded-full flex items-center justify-center text-white font-semibold">
+                                ${msg.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-white">${escapeHtml(msg.name)}</h4>
+                                <p class="text-sm text-gray-400">${escapeHtml(msg.email)}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-gray-500">${formatDate(msg.timestamp)}</span>
+                            ${!msg.read ? '<span class="ml-2 w-2 h-2 bg-[#667eea] rounded-full inline-block"></span>' : ''}
+                        </div>
+                    </div>
+                    <p class="text-gray-300 mt-3 line-clamp-2">${escapeHtml(msg.message)}</p>
+                </div>
+            `).join('');
+        }
+
+        function openMessage(id) {
+            const msg = messages.find(m => m.id === id);
+            if (!msg) return;
+
+            currentMessageId = id;
+            msg.read = true;
+            localStorage.setItem('contactMessages', JSON.stringify(messages));
+            updateStats();
+            renderMessages();
+
+            document.getElementById('modalContent').innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4 pb-4 border-b border-white/10">
+                        <div class="w-16 h-16 bg-gradient-to-br from-[#667eea] to-[#764ba2] rounded-full flex items-center justify-center text-2xl text-white font-bold">
+                            ${msg.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold">${escapeHtml(msg.name)}</h4>
+                            <p class="text-gray-400">${escapeHtml(msg.email)}</p>
+                            <p class="text-sm text-gray-500 mt-1">${formatDate(msg.timestamp)}</p>
+                        </div>
+                    </div>
+                    <div class="bg-[#0a0a0a] p-4 rounded-lg border border-white/10">
+                        <p class="text-gray-300 whitespace-pre-wrap">${escapeHtml(msg.message)}</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('messageModal').classList.remove('hidden');
+            document.getElementById('messageModal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('messageModal').classList.add('hidden');
+            document.getElementById('messageModal').classList.remove('flex');
+            currentMessageId = null;
+        }
+
+        function deleteCurrentMessage() {
+            if (!currentMessageId) return;
+            if (!confirm('Are you sure you want to delete this message?')) return;
+
+            messages = messages.filter(m => m.id !== currentMessageId);
+            localStorage.setItem('contactMessages', JSON.stringify(messages));
+            closeModal();
+            updateStats();
+            renderMessages();
+        }
+
+        function markAllRead() {
+            messages.forEach(m => m.read = true);
+            localStorage.setItem('contactMessages', JSON.stringify(messages));
+            updateStats();
+            renderMessages();
+        }
+
+        function clearAllMessages() {
+            if (!confirm('Are you sure you want to delete all messages? This cannot be undone.')) return;
+            messages = [];
+            localStorage.setItem('contactMessages', JSON.stringify(messages));
+            updateStats();
+            renderMessages();
+        }
+
+        function exportMessages() {
+            if (messages.length === 0) {
+                alert('No messages to export');
+                return;
+            }
+
+            const csv = [
+                ['Date', 'Name', 'Email', 'Message', 'Status'].join(','),
+                ...messages.map(m => [
+                    new Date(m.timestamp).toLocaleString(),
+                    `"${m.name.replace(/"/g, '""')}"`,
+                    `"${m.email.replace(/"/g, '""')}"`,
+                    `"${m.message.replace(/"/g, '""').replace(/\n/g, ' ')}"`,
+                    m.read ? 'Read' : 'Unread'
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `messages_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function replyToMessage() {
+            const msg = messages.find(m => m.id === currentMessageId);
+            if (msg) {
+                window.location.href = `mailto:${msg.email}`;
+            }
+        }
+
+        function refreshMessages() {
+            loadMessages();
+            const btn = document.querySelector('.fa-sync-alt');
+            btn.classList.add('fa-spin');
+            setTimeout(() => btn.classList.remove('fa-spin'), 1000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 1) return 'Just now';
+            if (minutes < 60) return `${minutes}m ago`;
+            if (hours < 24) return `${hours}h ago`;
+            if (days < 7) return `${days}d ago`;
+            return date.toLocaleDateString();
+        }
+
+        // Close modal on outside click
+        document.getElementById('messageModal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            if (document.getElementById('dashboard').classList.contains('hidden') === false) {
+                loadMessages();
+            }
+        }, 30000);
+    </script>
+</body>
+
+</html>
